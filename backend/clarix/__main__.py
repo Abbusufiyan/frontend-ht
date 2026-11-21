@@ -32,6 +32,12 @@ def main(argv: list[str] | None = None) -> int:
                           "guard": guard.status(), "posture": monitor.posture(guard.status()), "ollama": ollama,
                           "auditChain": ctx.audit.verify()}, indent=2, default=str))
         return 0
+    if settings.ephemeral_token:
+        print(f"\n{'='*72}\n[CLARIX AI] OPERATOR AUTHENTICATION REQUIRED (SEC-01)\n"
+              f"Ephemeral Operator Token generated for this session:\n"
+              f"  >>> {settings.ephemeral_token} <<<\n"
+              f"Set CLARIX_API_TOKEN in .env or pass in Authorization: Bearer <token>\n"
+              f"To run without auth for local demos: set CLARIX_DEMO_MODE=1\n{'='*72}\n", flush=True)
     if a.server == "fastapi":
         try:
             import uvicorn

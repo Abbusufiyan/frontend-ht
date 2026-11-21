@@ -11,11 +11,19 @@ import type { BackendStatus } from '../types';
 export const config = {
   useMocks: import.meta.env.VITE_USE_MOCKS !== 'false',
   apiUrl: (import.meta.env.VITE_API_URL ?? 'http://localhost:8000').replace(/\/$/, ''),
-  // Optional bearer token for the loopback operator console. VITE_ variables are bundled into the page, so
-  // only use a token that is acceptable to expose to anyone who can open this UI.
-  apiToken: import.meta.env.VITE_API_TOKEN ?? '',
+  // Operator bearer token: reads from localStorage, VITE_API_TOKEN, or VITE_CLARIX_API_TOKEN
+  apiToken: (typeof localStorage !== 'undefined' ? localStorage.getItem('clarix_api_token') : null) || (import.meta.env.VITE_API_TOKEN ?? import.meta.env.VITE_CLARIX_API_TOKEN ?? ''),
   ollamaUrl: (import.meta.env.VITE_OLLAMA_URL ?? 'http://localhost:11434').replace(/\/$/, ''),
 };
+
+export function setApiToken(token: string): void {
+  const t = token.trim();
+  config.apiToken = t;
+  if (typeof localStorage !== 'undefined') {
+    if (t) localStorage.setItem('clarix_api_token', t);
+    else localStorage.removeItem('clarix_api_token');
+  }
+}
 
 export function setEndpoints(apiUrl: string, ollamaUrl: string): void {
   config.apiUrl = apiUrl.replace(/\/$/, '');
@@ -59,6 +67,9 @@ export async function request<T>(path: string, init?: RequestInit, timeoutMs = 8
       signal: ctrl.signal,
     });
     if (!res.ok) {
+      if (res.status === 401 && typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('clarix:auth_required', { detail: { path, status: 401 } }));
+      }
       let msg = `Backend returned ${res.status} for ${path}`;
       try {
         const j = (await res.json()) as { error?: { message?: string } };

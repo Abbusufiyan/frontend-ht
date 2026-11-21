@@ -47,7 +47,7 @@ export const toolService = {
   runtimeCards() {
     return [
       { id: 'calc', name: 'Calculator', verb: 'EXECUTE', runs: 215, desc: 'Abstract syntax tree parser evaluating arithmetic without eval() or shell access.', sample: '(450 * 1.15) / 12' },
-      { id: 'fs', name: 'File Reader', verb: 'READ', runs: 142, desc: 'Sandboxed file reader restricted strictly to /sandbox/workspace directory.', sample: '/sandbox/workspace/system_manual.pdf' },
+      { id: 'fs', name: 'File Reader', verb: 'READ', runs: 142, desc: 'Sandboxed file reader restricted strictly to workspace directory.', sample: 'network_topology.csv' },
       { id: 'db', name: 'Local Database Query', verb: 'READ', runs: 89, desc: 'Local SQLite read-only SELECT querying vector indices and metadata.', sample: 'SELECT count(*) FROM chunks' },
       { id: 'sysinfo', name: 'System Information', verb: 'READ', runs: 52, desc: 'Static host sandbox telemetry (OS, architecture, hardware memory bounds).', sample: 'info' },
     ];

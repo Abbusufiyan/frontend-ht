@@ -71,8 +71,13 @@ def resolve_in_workspace(workspace: Path, user_path: str) -> Path:
     """Resolve symlinks and '..' FIRST, then require the result to stay inside the workspace."""
     if not user_path or "\x00" in user_path:
         raise ToolError("Invalid path")
+    clean_path = user_path.strip().replace("\\", "/")
+    if clean_path.startswith("/sandbox/workspace/"):
+        clean_path = clean_path[len("/sandbox/workspace/"):]
+    elif clean_path.startswith("sandbox/workspace/"):
+        clean_path = clean_path[len("sandbox/workspace/"):]
     root = workspace.resolve()
-    p = Path(user_path)
+    p = Path(clean_path)
     full = (p if p.is_absolute() else root / p).resolve()
     try:
         full.relative_to(root)
@@ -151,6 +156,10 @@ def system_info() -> str:
 
 # ---------------------------------------------------------------- restricted shell (allowlist, no shell)
 ALLOWED_COMMANDS = {"uname": {"-a", "-s", "-r", "-m"}, "date": {"-u"}, "uptime": set(), "hostname": set(), "whoami": set(), "df": {"-h"}}
+BLOCKED_NETWORK_BINARIES = {
+    "curl", "wget", "nc", "ncat", "netcat", "telnet", "ssh", "scp", "sftp",
+    "ftp", "tftp", "powershell", "pwsh", "certutil", "bitsadmin", "nslookup", "dig", "ping"
+}
 
 
 def _run_native_inspection(cmd: str, args: list[str], workspace: Path) -> str:
@@ -202,6 +211,30 @@ def run_command(workspace: Path, command_line: str) -> str:
     if not argv:
         raise ToolError("Empty command")
     cmd, args = argv[0], argv[1:]
+    cmd_lower = cmd.lower()
+    if cmd_lower in BLOCKED_NETWORK_BINARIES:
+        if cmd_lower == "ping":
+            for a in args:
+                if not a.startswith("-") and not a.startswith("/"):
+                    from ..netutil import is_loopback_host
+                    if not is_loopback_host(a):
+                        raise ToolError(f"Ping to non-loopback destination '{a}' is blocked by egress isolation policy (SEC-02).")
+        raise ToolError(f"Network binary '{cmd}' is blocked by egress isolation policy (SEC-02). Outbound network access is prohibited.")
+
+    # Check for PowerShell web transfer cmdlets and non-loopback URLs/IPs in arguments
+    for a in args:
+        if re.search(r"(?i)\b(invoke-webrequest|iwr|invoke-restmethod|irm|start-bitstransfer)\b", a):
+            raise ToolError(f"PowerShell web transfer command in argument '{a}' is blocked by egress isolation policy (SEC-02).")
+        m_url = re.search(r"(?i)\b(https?|ftp|sftp|ssh|ws|wss)://([^\s/:]+)", a)
+        if m_url:
+            from ..netutil import is_loopback_host
+            if not is_loopback_host(m_url.group(2)):
+                raise ToolError(f"Argument contains non-loopback URL '{m_url.group(0)}': blocked by egress isolation policy (SEC-02).")
+        for m_ip in re.finditer(r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b", a):
+            from ..netutil import is_loopback_host
+            if not is_loopback_host(m_ip.group(0)):
+                raise ToolError(f"Argument contains non-loopback IP target '{m_ip.group(0)}': blocked by egress isolation policy (SEC-02).")
+
     if cmd == "ls" and len(args) <= 1:
         target = resolve_in_workspace(workspace, args[0] if args else ".")
         if not target.is_dir():

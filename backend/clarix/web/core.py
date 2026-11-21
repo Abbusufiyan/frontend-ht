@@ -127,6 +127,11 @@ class Dispatcher:
 
     def __call__(self, req: Request) -> tuple[int, Any, dict]:
         try:
+            origin = req.headers.get("origin")
+            if origin and req.method in ("POST", "PUT", "PATCH", "DELETE"):
+                allowed = {o.rstrip("/") for o in self.ctx.settings.cors_origins}
+                if origin.rstrip("/") not in allowed:
+                    raise ApiError(403, "cors_forbidden", f"Cross-Origin {req.method} requests from origin '{origin}' are forbidden (SEC-04).")
             route, params = _resolve(self.routes, req.method, req.path)
             req.params = params
             req.operator = authenticate(self.ctx, req, route)

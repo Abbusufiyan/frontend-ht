@@ -9,5 +9,5 @@ export { ollamaService } from './ollamaService';
 export { auditService } from './auditService';
 export { healthService } from './healthService';
 export { settingsService } from './settingsService';
-export { config, setEndpoints, setSimulatedErrors, getSimulatedErrors } from './client';
+export { config, setEndpoints, setApiToken, setSimulatedErrors, getSimulatedErrors } from './client';
 export { flags as demoFlags } from './mock/db';

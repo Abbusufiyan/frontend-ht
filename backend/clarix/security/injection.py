@@ -19,11 +19,15 @@ from ..classification import CLASSES, max_class
 MAX_INPUT = 8000
 BLOCK_AT, REVIEW_AT = 60, 35
 
-_ZW = re.compile("[\u200b-\u200f\u202a-\u202e\u2060-\u2064\ufeff\u00ad]")
+_ZW = re.compile(r"[\u200b-\u200f\u202a-\u202e\u2060-\u2064\ufeff\u00ad\u2000-\u200a\u2028\u2029]")
 _CTRL = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]")
-_SPACED = re.compile(r"\b(?:[a-z]\s){4,}[a-z]\b")
+_SPACED = re.compile(r"\b(?:[a-z]\s){2,}[a-z]\b")
 _B64 = re.compile(r"[A-Za-z0-9+/]{24,}={0,2}")
-_HOMOGLYPH = str.maketrans({"0": "o", "1": "i", "3": "e", "4": "a", "5": "s", "7": "t", "@": "a", "$": "s"})
+_HOMOGLYPH = str.maketrans({
+    "0": "o", "1": "i", "3": "e", "4": "a", "5": "s", "7": "t", "@": "a", "$": "s",
+    "а": "a", "е": "e", "о": "o", "р": "p", "с": "s", "у": "y", "х": "x", "і": "i",
+    "ј": "j", "ѕ": "s", "ԁ": "d", "ԛ": "q", "ν": "v"
+})
 
 
 @dataclass(frozen=True)
@@ -71,6 +75,43 @@ RULES: tuple[Rule, ...] = (
     _r("disable-controls", "Policy Evasion", 45, "Asks to disable safety, filtering or logging.",
        r"\b(disable|turn off|deactivate|remove|bypass)\b[^.\n]{0,30}\b(safety|filters?|guardrails?|polic(y|ies)|monitoring|logging|audit)\b"),
     _r("tool-abuse", "Tool Abuse", 45, "Explicitly requests a forbidden sink tool.", r"\b(call|invoke|use|run|execute)\b[^.\n]{0,20}\b(http_post|send_email|network_request|database_export)\b"),
+    # SEC-03: Multilingual patterns for Spanish, French, German, Hindi, Kannada, Portuguese, Chinese, Arabic
+    _r("multilingual-override", "Instruction Override", 60, "Multilingual attempt to override system instructions.",
+       r"("
+       r"\b(ignora|ignorar|olvida|olvidar|desecha|descartar)\b[^.\n]{0,50}\b(instrucciones|reglas|directrices|indicaciones)\b|"
+       r"\b(ignore|ignorez|oublie|oubliez|annule|annulez)\b[^.\n]{0,50}\b(instructions|consignes|règles|regles|directives)\b|"
+       r"\b(ignoriere|ignorieren|vergiss|vergessen Sie|verwerfe)\b[^.\n]{0,50}\b(anweisungen|instruktionen|regeln|richtlinien|prompts)\b|"
+       r"\b(pichhle|pichle|purane|saare|sabhi)\s+(nirdesh|instructions?|hidayat(en)?)\s+(bhool|chhod|ignore|disregard)\b|"
+       r"\b(पिछली|पिछले|सारे|सभी)\s+(निर्देश|हिदायतें|नियम|इंस्ट्रक्शन)\s+(भूल|छोड़|अनदेखा)\b|"
+       r"\b(hinde|hindina|ella)\s+(soochane|instructions?|nirdesha)\s*(annu)?\s*(marethu|bittubidu|ignore)\b|"
+       r"\b(ignore|desconsidere|esqueça|esqueca)\b[^.\n]{0,50}\b(instruções|instrucoes|regras|diretrizes)\b|"
+       r"(忽略|无视|忘记|跳过|撤销)(之前|以往|所有|全部|以上)?的?(指示|指令|提示词|规则|要求)|"
+       r"(تجاهل|انس[ىي]|الغ[يى]|اترك)\s+(جميع\s+|كل\s+)?(التعليمات|الأوامر|الاوامر|التوجيهات|القواعد)"
+       r")"),
+    _r("multilingual-leak", "System Prompt Leak", 50, "Multilingual attempt to extract system prompt.",
+       r"("
+       r"\b(muestra|revela|imprime|dime|exhibe)\b[^.\n]{0,50}\b(el\s+prompt|el\s+mensaje|las\s+instrucciones|la\s+configuraci[oó]n)\s+(del?\s+)?sistema\b|"
+       r"\b(révèle|revele|affiche|montre|donne)\b[^.\n]{0,50}\b(le\s+prompt|le\s+message|les\s+instructions)\s+(du\s+)?système\b|"
+       r"\b(zeige|offenbare|nenne|gib)\b[^.\n]{0,50}\b(system-?prompt|systemanweisungen|system-?instruktionen)\b|"
+       r"\b(system\s+prompt|system\s+instructions?)\s+(dikhao|batao|reveal\s+karo|print\s+karo)\b|"
+       r"\b(सिस्टम\s+प्रॉम्प्ट|सिस्टम\s+निर्देश|सिस्टम\s+संदेश)\s+(दिखाओ|बताओ|प्रकट\s+करो)\b|"
+       r"\b(system\s+prompt|system\s+instructions?)\s+(thorisu|heli|display\s+maadu)\b|"
+       r"\b(revele|mostre|exiba|diga)\b[^.\n]{0,50}\b(prompt|instruções)\s+(do\s+)?sistema\b|"
+       r"(显示|输出|透露|告诉我|打印)(系统)?(提示词|指令|规则|system\s*prompt)|"
+       r"(اظهر|اكشف|اعرض|قل\s+لي|اطبع)\s+(موجه|تعليمات|رسالة)\s+النظام"
+       r")"),
+    _r("multilingual-jailbreak", "Jailbreak Pattern", 60, "Multilingual roleplay or developer mode jailbreak.",
+       r"("
+       r"\b(ahora\s+eres|act[uú]a\s+como|comportate\s+como)\b[^.\n]{0,40}\b(dan|sin\s+restricciones|modo\s+desarrollador|unrestricted)\b|\bmodo\s+desarrollador\s+(activado|desbloqueado|on)\b|"
+       r"\b(tu\s+es\s+maintenant|agis\s+comme)\b[^.\n]{0,40}\b(dan|sans\s+limites?|mode\s+d[ée]veloppeur)\b|\bmode\s+d[ée]veloppeur\s+(activ[ée]|on)\b|"
+       r"\b(du\s+bist\s+jetzt|handle\s+als)\b[^.\n]{0,40}\b(dan|ohne\s+einschr[äa]nkungen|entwicklermodus)\b|\bentwicklermodus\s+(aktiviert|ein|on)\b|"
+       r"\b(ab\s+tum|tum\s+ab)\s+(dan|developer\s+mode|bina\s+niyam)\b|\bdeveloper\s+mode\s+(on|chalu|activate)\b|"
+       r"\b(अब\s+तुम|तुम\s+अब)\s+(डेवलपर\s+मोड|डैन|बिना\s+नियम)\b|\bडेवलपर\s+मोड\s+(चालू|सक्रिय)\b|"
+       r"\b(neenu\s+eega|neevu\s+eega)\s+(dan|developer\s+mode)\b|"
+       r"\b(voc[eê]\s+agora\s+[eé]|aja\s+como)\b[^.\n]{0,40}\b(dan|sem\s+restri[cç][oõ]es|modo\s+desenvolvedor)\b|\bmodo\s+desenvolvedor\s+(ativado|on)\b|"
+       r"(你现在是|扮演|进入)(开发者模式|无限制模式|DAN|evil)|(开发者模式|无限制模式)(激活|开启|启用)|"
+       r"(أنت\s+الآن|انت\s+الان|تصرف\s+كـ?)[^.\n]{0,40}(دان|dan|وضع\s+المطور|بدون\s+قيود)|وضع\s+المطور"
+       r")"),
 )
 
 
@@ -100,8 +141,10 @@ def normalise(text: str) -> tuple[str, bool]:
     low = t2.lower()
     spaced = bool(_SPACED.search(re.sub(r" {2,}", "  ", low)))
     if spaced:
-        # 'i g n o r e  a l l': 2+ spaces mark word gaps; single spaces between letters are removed
+        # Mark 2+ spaces as word gaps
         low = re.sub(r" {2,}", "\x00", low)
+        # Collapse sequences of spaced single letters: e.g. "s y s t e m" -> "system", "i g n o r e" -> "ignore"
+        low = re.sub(r"\b[a-z](?:\s+[a-z]){2,}\b", lambda m: re.sub(r"\s+", "", m.group(0)), low)
         low = _SPACED.sub(lambda m: m.group(0).replace(" ", ""), low)
         low = low.replace("\x00", " ")
         changed = True
@@ -112,7 +155,10 @@ def normalise(text: str) -> tuple[str, bool]:
 SQUASHED = {
     "ignoreallpreviousinstructions": 60, "ignorepreviousinstructions": 60, "ignoreallinstructions": 60,
     "disregardpreviousinstructions": 60, "ignoretheaboveinstructions": 60, "revealthesystemprompt": 50,
-    "revealyoursystemprompt": 50, "youarenowdan": 60, "doanythingnow": 55,
+    "revealyoursystemprompt": 50, "youarenowdan": 60, "doanythingnow": 55, "developermode": 45,
+    "systemprompt": 50, "ignoratodaslasinstrucciones": 60, "ignorartodaslasinstrucciones": 60,
+    "ignoretouteslesinstructions": 60, "ignorierealleanweisungen": 60, "pichlenirdeshbhooljao": 60,
+    "hindinasochanemarethu": 60, "ignoreasinstrucoes": 60,
 }
 
 

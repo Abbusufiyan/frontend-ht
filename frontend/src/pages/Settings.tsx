@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
-import { Bell, Database, Link2, Lock, Plug, RefreshCw, Server, Settings as Cog, ShieldCheck, SlidersHorizontal, Sparkles, WifiOff, AlertTriangle, RotateCcw } from 'lucide-react';
+import { Bell, Database, KeyRound, Link2, Lock, Plug, RefreshCw, Server, Settings as Cog, ShieldCheck, SlidersHorizontal, Sparkles, WifiOff, AlertTriangle, RotateCcw } from 'lucide-react';
 import { Card, Page, PageHeader, Pill, Spinner, Toggle } from '../components/common';
-import { config, setEndpoints, settingsService } from '../services';
+import { config, setEndpoints, setApiToken, settingsService } from '../services';
 import { useConsole, type Settings as S } from '../state/ConsoleContext';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import type { BackendStatus } from '../types';
@@ -25,6 +25,7 @@ export default function Settings() {
   const [saved, setSaved] = useLocalStorage('clarix.endpoints.v1', { api: config.apiUrl, ollama: config.ollamaUrl });
   const [api, setApi] = useState(saved.api);
   const [ollama, setOllama] = useState(saved.ollama);
+  const [token, setToken] = useState(config.apiToken || '');
   const [apiRes, setApiRes] = useState<BackendStatus | null>(null);
   const [olRes, setOlRes] = useState<BackendStatus | null>(null);
   const [busy, setBusy] = useState<'api' | 'ollama' | null>(null);
@@ -38,7 +39,7 @@ export default function Settings() {
   }
   function save() {
     if (!apiOk || !olOk) { toast('Enter valid http(s) URLs for both endpoints.', 'red'); return; }
-    setSaved({ api, ollama }); setEndpoints(api, ollama); toast('Endpoints saved in this browser.', 'green');
+    setSaved({ api, ollama }); setEndpoints(api, ollama); setApiToken(token); toast('Endpoints and operator token saved in this browser.', 'green');
   }
   function reset() {
     resetSettings();
@@ -86,6 +87,11 @@ export default function Settings() {
               {!olOk && <p className="cx-sub tone-red" role="alert" style={{ margin: '.3rem 0 0' }}>Enter a valid http(s) URL.</p>}
               {olRes && <p className={`cx-sub ${olRes.ok ? 'tone-green' : 'tone-red'}`} role="status" style={{ margin: '.4rem 0 0' }}>{olRes.ok ? '✓' : '✕'} {olRes.message}{olRes.latencyMs !== undefined && ` (${olRes.latencyMs}ms)`}</p>}
             </div>
+          </div>
+          <div style={{ marginTop: '0.9rem' }}>
+            <label className="cx-label" htmlFor="api-token">Operator API Bearer Token (SEC-01):</label>
+            <div className="st-url"><KeyRound /><input id="api-token" className="cx-input cx-mono" value={token} onChange={(e) => setToken(e.target.value)} placeholder="Enter 32-byte ephemeral operator token or CLARIX_API_TOKEN..." /></div>
+            <p className="cx-sub" style={{ margin: '.3rem 0 0', fontSize: '.68rem' }}>When CLARIX_API_TOKEN is unset and demo mode is off, an ephemeral 32-byte token is printed at backend startup. Saved in local browser storage.</p>
           </div>
           <div className="cx-row" style={{ marginTop: '1rem' }}>
             <button type="button" className="cx-btn cx-btn--success" disabled={!apiOk || busy !== null} onClick={() => void test('api')}>{busy === 'api' ? <Spinner label="Testing" /> : <><Plug />Test Connection to FastAPI</>}</button>

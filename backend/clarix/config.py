@@ -49,8 +49,10 @@ class Settings:
     default_model: str = "llama3"
     embed_model: str = "nomic-embed-text"
     embed_backend: str = "auto"  # auto | ollama | hash
-    cors_origins: tuple[str, ...] = ("http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:4173", "http://127.0.0.1:4173")
+    cors_origins: tuple[str, ...] = ("http://127.0.0.1:5173", "http://localhost:5173")
     api_tokens: dict = field(default_factory=dict)  # token -> operator id; empty = dev mode (no auth)
+    demo_mode: bool = False
+    ephemeral_token: str | None = None
     approval_timeout_s: int = 300
     airgap_enforce: bool = True
     demo_endpoints: bool = True
@@ -74,12 +76,18 @@ class Settings:
     def auth_enabled(self) -> bool:
         return bool(self.api_tokens)
 
+    @property
+    def demo_auth_relaxed(self) -> bool:
+        return self.demo_mode and is_loopback_host(self.host) and not self.auth_enabled
+
     @classmethod
     def from_env(cls, env: dict | None = None) -> "Settings":
         if env is None:
             for candidate in (Path(os.environ.get("CLARIX_ENV_FILE", ".env")), Path(__file__).resolve().parents[1] / ".env"):
                 load_dotenv(candidate, os.environ)
         e = os.environ if env is None else env
+        demo_mode = _bool(e.get("CLARIX_DEMO_MODE"), False)
+        host = e.get("CLARIX_HOST", "127.0.0.1")
         tokens: dict[str, str] = {}
         if e.get("CLARIX_API_TOKEN"):
             tokens[e["CLARIX_API_TOKEN"]] = "operator"
@@ -88,8 +96,16 @@ class Settings:
             if not name.strip() or len(tok.strip()) < 16:
                 raise ConfigError("CLARIX_OPERATOR_TOKENS entries must look like 'alice:<token of 16+ chars>'")
             tokens[tok.strip()] = name.strip()
+        ephemeral = None
+        if not tokens:
+            if demo_mode and is_loopback_host(host):
+                pass  # DEMO MODE: auth relaxed when bound to loopback
+            else:
+                import secrets
+                ephemeral = secrets.token_hex(32)
+                tokens[ephemeral] = "ephemeral-operator"
         s = cls(
-            host=e.get("CLARIX_HOST", "127.0.0.1"),
+            host=host,
             port=int(e.get("CLARIX_PORT", "8000")),
             data_dir=Path(e.get("CLARIX_DATA_DIR", "./data")),
             ollama_url=e.get("CLARIX_OLLAMA_URL", "http://127.0.0.1:11434").rstrip("/"),
@@ -98,6 +114,8 @@ class Settings:
             embed_backend=e.get("CLARIX_EMBED_BACKEND", "auto"),
             cors_origins=tuple(x.strip() for x in e.get("CLARIX_CORS_ORIGINS", ",".join(cls.cors_origins)).split(",") if x.strip()),
             api_tokens=tokens,
+            demo_mode=demo_mode,
+            ephemeral_token=ephemeral,
             approval_timeout_s=int(e.get("CLARIX_APPROVAL_TIMEOUT_S", "300")),
             airgap_enforce=_bool(e.get("CLARIX_AIRGAP_ENFORCE"), True),
             demo_endpoints=_bool(e.get("CLARIX_DEMO_ENDPOINTS"), True),

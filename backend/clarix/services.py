@@ -49,8 +49,18 @@ def _live_events(ctx) -> list[dict]:
 
 # --------------------------------------------------------------------------- meta
 def public_health(ctx, req):
-    return {"status": "ok", "version": __import__("clarix").__version__, "authRequired": ctx.settings.auth_enabled,
-            "airgapGuard": guard.status(), "uptimeS": int(time.time() - ctx.started)}
+    p = monitor.posture(guard.status())
+    res = {"status": "ok", "version": __import__("clarix").__version__, "authRequired": ctx.settings.auth_enabled,
+           "airgapGuard": guard.status(), "posture": p["status"], "uptimeS": int(time.time() - ctx.started)}
+    if p["status"] == "NOT_ISOLATED":
+        res["warning"] = "Host network posture is NOT_ISOLATED. OS-level firewall rules (deploy/nftables-airgap.conf) are recommended."
+    if getattr(ctx.settings, "demo_mode", False):
+        res["demoMode"] = True
+        if getattr(ctx.settings, "demo_auth_relaxed", False):
+            res["demoAuthRelaxed"] = True
+            res["flag"] = "DEMO MODE — auth relaxed"
+            res["flags"] = ["DEMO MODE — auth relaxed"]
+    return res
 
 
 def overview(ctx, req):
@@ -118,7 +128,10 @@ def security_monitor(ctx, req):
 
 def airgap_get(ctx, req):
     log_rows = ctx.db.q("SELECT * FROM blocked_connections ORDER BY id DESC LIMIT 100")
-    return {"series": ctx.telemetry.egress_series(), "posture": monitor.posture(guard.status()),
+    p = monitor.posture(guard.status())
+    if p["status"] == "NOT_ISOLATED":
+        p["warning"] = "Host network posture is NOT_ISOLATED. OS-level firewall rules (deploy/nftables-airgap.conf) are recommended."
+    return {"series": ctx.telemetry.egress_series(), "posture": p,
             "log": [{"time": clock(r["ts"]), "host": r["host"], "port": r["port"], "protocol": r["protocol"], "subsystem": r["subsystem"], "rule": r["rule"]} for r in reversed(log_rows)]}
 
 
