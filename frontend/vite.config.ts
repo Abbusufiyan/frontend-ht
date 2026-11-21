@@ -4,7 +4,17 @@ import react from '@vitejs/plugin-react';
 // Dev server binds to loopback only: this app is designed for an air-gapped host.
 export default defineConfig({
   plugins: [react()],
-  // ignore the backend folder when it is nested in this project (its SQLite/WAL files change constantly)
-  server: { host: '127.0.0.1', port: 5173, watch: { ignored: ['**/.venv/**'] } },
+  // ignore the backend and network-service folders when nested in this project
+  server: {
+    host: '127.0.0.1',
+    port: 5173,
+    watch: { ignored: ['**/.venv/**'] },
+    proxy: {
+      '/api/network': {
+        target: 'http://127.0.0.1:8080',
+        changeOrigin: true,
+      },
+    },
+  },
   preview: { host: '127.0.0.1', port: 4173 },
 });
