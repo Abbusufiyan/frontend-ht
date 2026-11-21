@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { ClarixMark } from '../common/ClarixMark';
 import styles from './PillNav.module.css';
 
 interface NavItem {
@@ -77,18 +78,7 @@ export function PillNav() {
         onClick={toggleNav}
         onKeyDown={handleKeyDown}
       >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.2"
-          aria-hidden="true"
-        >
-          <rect x="2" y="2" width="8.5" height="8.5" rx="4.2" />
-          <rect x="13.5" y="2" width="8.5" height="8.5" rx="4.2" />
-          <rect x="2" y="13.5" width="8.5" height="8.5" rx="4.2" />
-          <rect x="13.5" y="13.5" width="8.5" height="8.5" rx="4.2" />
-        </svg>
+        <ClarixMark size={19} />
       </div>
 
       <div className={styles.items} id="items">

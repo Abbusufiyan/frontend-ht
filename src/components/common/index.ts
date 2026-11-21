@@ -11,3 +11,4 @@ export * from './PostureStrip';
 export * from './ToastHost';
 export * from './CopyButton';
 export * from './Page';
+export * from './ClarixMark';

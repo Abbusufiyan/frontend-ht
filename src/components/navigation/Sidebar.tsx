@@ -7,9 +7,11 @@ import {
   type KeyboardEvent,
   type MouseEvent,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useLocation } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
 import { ChevronLeft } from 'lucide-react';
+import { ClarixMark } from '../common/ClarixMark';
 import styles from './Sidebar.module.css';
 
 export interface SidebarItem {
@@ -121,6 +123,17 @@ export function Sidebar({
     }
     const sidebarRect = sidebarRef.current.getBoundingClientRect();
     const itemRect = activeEl.getBoundingClientRect();
+
+    // Check if the item is scrolled out of the visible sidebar area
+    if (
+      itemRect.bottom < sidebarRect.top + 50 ||
+      itemRect.top > sidebarRect.bottom - 46
+    ) {
+      hlRef.current.style.opacity = '0';
+      return;
+    }
+
+    // Because .hl has top: 0, translateY is exactly itemRect.top - sidebarRect.top
     const y = itemRect.top - sidebarRect.top;
     hlRef.current.style.transform = `translateY(${y}px)`;
     hlRef.current.style.opacity = '1';
@@ -186,17 +199,18 @@ export function Sidebar({
     setCollapsed(true);
   };
 
-  return (
+  // Mount via portal to document.body so no parent opacity/filter/transform breaks backdrop-filter
+  const asideContent = (
     <aside
       ref={sidebarRef}
       className={`${styles.sidebar} ${isCollapsed ? styles.collapsed : ''}`}
       aria-label="Console navigation"
       onTransitionEnd={handleTransitionEnd}
     >
-      {/* Sliding active highlight pill */}
+      {/* Single sliding active highlight pill */}
       <div ref={hlRef} className={styles.hl} aria-hidden="true" />
 
-      {/* Top Header: Logo + Brand + Collapse button */}
+      {/* Top Header: Logo Mark + Brand + Collapse button */}
       <button
         type="button"
         className={styles.top}
@@ -207,19 +221,7 @@ export function Sidebar({
         aria-expanded={!isCollapsed}
       >
         <div className={styles.mark} aria-hidden="true">
-          <svg
-            width="22"
-            height="22"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-          >
-            <rect x="2" y="2" width="8.5" height="8.5" rx="4.2" />
-            <rect x="13.5" y="2" width="8.5" height="8.5" rx="4.2" />
-            <rect x="2" y="13.5" width="8.5" height="8.5" rx="4.2" />
-            <rect x="13.5" y="13.5" width="8.5" height="8.5" rx="4.2" />
-          </svg>
+          <ClarixMark size={22} />
         </div>
         <span className={styles.brand}>Clarix</span>
         <button
@@ -233,7 +235,7 @@ export function Sidebar({
         </button>
       </button>
 
-      {/* Core navigation list (scrollable on overflow) */}
+      {/* Core navigation list (scrollable on overflow, hidden scrollbar) */}
       <div ref={listRef} className={styles.list}>
         {items.map((item) => {
           const isActive = item.key === resolvedActiveKey;
@@ -284,4 +286,10 @@ export function Sidebar({
       )}
     </aside>
   );
+
+  if (typeof document !== 'undefined') {
+    return createPortal(asideContent, document.body);
+  }
+
+  return asideContent;
 }
