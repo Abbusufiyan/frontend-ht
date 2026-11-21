@@ -44,3 +44,26 @@ export const NAV_GROUPS: NavGroup[] = [
 ];
 
 export const ALL_NAV: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
+
+export interface SidebarNavDef {
+  key: string;
+  label: string;
+  icon: LucideIcon;
+  href: string;
+}
+
+export const SIDEBAR_ITEMS: SidebarNavDef[] = ALL_NAV.filter(
+  (n) => n.path !== '/settings'
+).map((n) => ({
+  key: n.path.replace(/^\//, ''),
+  label: n.label,
+  icon: n.icon,
+  href: n.path,
+}));
+
+export const SIDEBAR_SETTINGS_ITEM: SidebarNavDef = {
+  key: 'settings',
+  label: 'Settings',
+  icon: Settings,
+  href: '/settings',
+};

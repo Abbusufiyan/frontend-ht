@@ -32,9 +32,28 @@ interface ConsoleValue {
   toasts: Toast[];
   toast: (text: string, tone?: ToastTone) => void;
   dismissToast: (id: string) => void;
+  sidebarCollapsed: boolean;
+  setSidebarCollapsed: (collapsed: boolean) => void;
 }
 
 const Ctx = createContext<ConsoleValue | null>(null);
+
+const SIDEBAR_STORAGE_KEY = 'clarix.sidebar.collapsed';
+
+export function getInitialSidebarCollapsed(): boolean {
+  try {
+    const saved = localStorage.getItem(SIDEBAR_STORAGE_KEY);
+    if (saved !== null) {
+      return JSON.parse(saved);
+    }
+  } catch {
+    // fallback
+  }
+  if (typeof window !== 'undefined' && window.innerWidth < 520) {
+    return true;
+  }
+  return false;
+}
 
 const HEARTBEATS: Omit<SecurityEvent, 'id' | 'time'>[] = [
   { source: 'Ollama Core', message: 'Heartbeat response: llama3 standby (temp 0.2)', kind: 'SUCCESS' },
@@ -48,6 +67,16 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
   const [counts, setCounts] = useState<Counts>({ pendingApprovals: 0, threats: 0 });
   const [liveEvents, setLiveEvents] = useState<SecurityEvent[]>([]);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [sidebarCollapsed, setSidebarCollapsedState] = useState<boolean>(getInitialSidebarCollapsed);
+
+  const setSidebarCollapsed = useCallback((collapsed: boolean) => {
+    setSidebarCollapsedState(collapsed);
+    try {
+      localStorage.setItem(SIDEBAR_STORAGE_KEY, JSON.stringify(collapsed));
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const dismissToast = useCallback((id: string) => setToasts((t) => t.filter((x) => x.id !== id)), []);
   const toast = useCallback((text: string, tone: ToastTone = 'blue') => {
@@ -79,8 +108,31 @@ export function ConsoleProvider({ children }: { children: ReactNode }) {
 
   const resetSettings = useCallback(() => setSettings(DEFAULT_SETTINGS), [setSettings]);
 
-  const value = useMemo<ConsoleValue>(() => ({ settings, setSetting, resetSettings, counts, refreshCounts, liveEvents, toasts, toast, dismissToast }),
-    [settings, setSetting, resetSettings, counts, refreshCounts, liveEvents, toasts, toast, dismissToast]);
+  const value = useMemo<ConsoleValue>(() => ({
+    settings,
+    setSetting,
+    resetSettings,
+    counts,
+    refreshCounts,
+    liveEvents,
+    toasts,
+    toast,
+    dismissToast,
+    sidebarCollapsed,
+    setSidebarCollapsed,
+  }), [
+    settings,
+    setSetting,
+    resetSettings,
+    counts,
+    refreshCounts,
+    liveEvents,
+    toasts,
+    toast,
+    dismissToast,
+    sidebarCollapsed,
+    setSidebarCollapsed,
+  ]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
