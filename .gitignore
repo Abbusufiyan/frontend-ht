@@ -10,3 +10,7 @@ dist/
 *.log
 .DS_Store
 *.tsbuildinfo
+network-frontend/node_modules/
+network-frontend/dist/
+network-frontend/.env
+
