@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import {
   Bot, Cpu, Database, FileCheck, FileText, Fingerprint, GitFork, HeartPulse, Layers, LayoutGrid,
-  Settings, Shield, ShieldAlert, Terminal, UserCheck, WifiOff, Wrench, type LucideIcon,
+  Network, Settings, Shield, ShieldAlert, Terminal, UserCheck, WifiOff, Wrench, type LucideIcon,
 } from 'lucide-react';
 import { useConsole } from '../../state/ConsoleContext';
 
@@ -23,6 +23,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { path: '/tool-permissions', label: 'Tool Permissions', icon: Wrench },
       { path: '/approvals', label: 'Human Approval', icon: UserCheck, badge: { kind: 'count', source: 'approvals', tone: 'amber' } },
       { path: '/air-gap', label: 'Air-Gap Monitor', icon: WifiOff, badge: { kind: 'text', text: 'ISOLATED', tone: 'red' } },
+      { path: '/network', label: 'Network', icon: Network },
       { path: '/rag', label: 'Local RAG', icon: Database },
       { path: '/ollama', label: 'Ollama Engine', icon: Cpu, badge: { kind: 'text', text: 'ONLINE', tone: 'green' } },
     ],
@@ -99,6 +100,12 @@ export function useSidebarSections(): SidebarSection[] {
             icon: WifiOff,
             href: '/air-gap',
             badge: { text: 'ISOLATED', tone: 'danger' },
+          },
+          {
+            key: 'network',
+            label: 'Network',
+            icon: Network,
+            href: '/network',
           },
           { key: 'rag', label: 'Local RAG', icon: Database, href: '/rag' },
           {
