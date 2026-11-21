@@ -8,9 +8,9 @@ import {
   type MouseEvent,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronDown, ChevronLeft } from 'lucide-react';
 import { ClarixMark } from '../common/ClarixMark';
 import styles from './Sidebar.module.css';
 
@@ -25,6 +25,7 @@ export interface SidebarItem {
   icon: LucideIcon;
   href: string;
   badge?: SidebarBadge;
+  children?: SidebarItem[];
 }
 
 export interface SidebarSection {
@@ -79,6 +80,7 @@ export function Sidebar({
   onCollapsedChange,
 }: SidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const isControlled = controlledCollapsed !== undefined;
 
   const [internalCollapsed, setInternalCollapsed] = useState<boolean>(() => {
@@ -108,11 +110,33 @@ export function Sidebar({
 
   const allItems = useMemo(
     () => [
-      ...normalizedSections.flatMap((s) => s.items),
-      ...(settingsItem ? [settingsItem] : []),
+      ...normalizedSections.flatMap((s) =>
+        s.items.flatMap((item) => [item, ...(item.children ?? [])])
+      ),
+      ...(settingsItem ? [settingsItem, ...(settingsItem.children ?? [])] : []),
     ],
     [normalizedSections, settingsItem]
   );
+
+  // Group accordion expansion state
+  const isNetworkRoute = location.pathname.startsWith('/network');
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(() => ({
+    network: isNetworkRoute,
+  }));
+
+  // Auto-expand when URL enters /network, collapse when navigating away
+  const prevPathnameRef = useRef(location.pathname);
+  useEffect(() => {
+    const wasNetwork = prevPathnameRef.current.startsWith('/network');
+    const isNetwork = location.pathname.startsWith('/network');
+    prevPathnameRef.current = location.pathname;
+
+    if (isNetwork && !wasNetwork) {
+      setExpandedGroups((prev) => ({ ...prev, network: true }));
+    } else if (!isNetwork && wasNetwork) {
+      setExpandedGroups((prev) => ({ ...prev, network: false }));
+    }
+  }, [location.pathname]);
 
   // Active key resolution: longest-prefix match on pathname
   const resolvedActiveKey = useMemo(() => {
@@ -139,17 +163,27 @@ export function Sidebar({
   // Slide highlight measurement
   const measureHighlight = useCallback(() => {
     if (!sidebarRef.current || !hlRef.current) return;
-    if (!resolvedActiveKey) {
+    const isNetwork = location.pathname.startsWith('/network');
+
+    // When collapsed to icons only and on /network, highlight the parent Network row
+    const targetKey = isCollapsed && isNetwork ? 'network' : resolvedActiveKey;
+
+    if (!targetKey) {
       hlRef.current.style.opacity = '0';
       return;
     }
-    const activeEl = itemRefs.current[resolvedActiveKey];
+    const activeEl = itemRefs.current[targetKey];
     if (!activeEl) {
       hlRef.current.style.opacity = '0';
       return;
     }
     const sidebarRect = sidebarRef.current.getBoundingClientRect();
     const itemRect = activeEl.getBoundingClientRect();
+
+    if (itemRect.height === 0) {
+      hlRef.current.style.opacity = '0';
+      return;
+    }
 
     // Check if the item is scrolled out of the visible sidebar area
     if (
@@ -160,15 +194,21 @@ export function Sidebar({
       return;
     }
 
-    // Because .hl has top: 0, translateY is exactly itemRect.top - sidebarRect.top
+    const x = itemRect.left - sidebarRect.left;
     const y = itemRect.top - sidebarRect.top;
-    hlRef.current.style.transform = `translateY(${y}px)`;
+    const w = itemRect.width;
+    const h = itemRect.height;
+
+    hlRef.current.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    hlRef.current.style.width = `${w}px`;
+    hlRef.current.style.height = `${h}px`;
+    hlRef.current.style.borderRadius = activeEl.dataset.subItem ? '12px' : '16px';
     hlRef.current.style.opacity = '1';
-  }, [resolvedActiveKey]);
+  }, [isCollapsed, location.pathname, resolvedActiveKey]);
 
   useEffect(() => {
     measureHighlight();
-  }, [measureHighlight, isCollapsed]);
+  }, [measureHighlight, isCollapsed, expandedGroups]);
 
   // Re-measure on window resize, list scroll, font loading, and layout changes
   useEffect(() => {
@@ -226,6 +266,55 @@ export function Sidebar({
     setCollapsed(true);
   };
 
+  const handleItemClick = (e: MouseEvent<HTMLAnchorElement>, item: SidebarItem) => {
+    const hasChildren = Boolean(item.children && item.children.length > 0);
+
+    if (isCollapsed) {
+      if (hasChildren) {
+        e.preventDefault();
+        setCollapsed(false);
+        setExpandedGroups((prev) => ({ ...prev, [item.key]: true }));
+        if (!location.pathname.startsWith('/network')) {
+          navigate('/network/dashboard');
+        }
+        return;
+      }
+    } else if (hasChildren) {
+      const isCurrentGroup = location.pathname.startsWith('/network');
+      if (isCurrentGroup) {
+        // Toggle closed/open when clicked while already on a network page
+        e.preventDefault();
+        setExpandedGroups((prev) => ({ ...prev, [item.key]: !prev[item.key] }));
+      } else {
+        // Expand group and navigate to /network/dashboard
+        setExpandedGroups((prev) => ({ ...prev, [item.key]: true }));
+      }
+    }
+
+    onSelect?.(item.key);
+  };
+
+  const handleItemKeyDown = (e: KeyboardEvent<HTMLAnchorElement>, item: SidebarItem) => {
+    if (e.key === ' ' && item.children && item.children.length > 0) {
+      e.preventDefault();
+      if (isCollapsed) {
+        setCollapsed(false);
+        setExpandedGroups((prev) => ({ ...prev, [item.key]: true }));
+        if (!location.pathname.startsWith('/network')) {
+          navigate('/network/dashboard');
+        }
+      } else {
+        const isCurrentGroup = location.pathname.startsWith('/network');
+        if (isCurrentGroup) {
+          setExpandedGroups((prev) => ({ ...prev, [item.key]: !prev[item.key] }));
+        } else {
+          setExpandedGroups((prev) => ({ ...prev, [item.key]: true }));
+          navigate('/network/dashboard');
+        }
+      }
+    }
+  };
+
   // Mount via portal to document.body so no parent opacity/filter/transform breaks backdrop-filter
   const asideContent = (
     <aside
@@ -271,36 +360,106 @@ export function Sidebar({
             {secIdx > 0 && <div className={styles.divider} aria-hidden="true" />}
             {sec.label && <div className={styles.sectionLabel}>{sec.label}</div>}
             {sec.items.map((item) => {
-              const isActive = item.key === resolvedActiveKey;
+              const hasChildren = Boolean(item.children && item.children.length > 0);
+              const isGroupExpanded = Boolean(expandedGroups[item.key]);
+              const isGroupActive = hasChildren && location.pathname.startsWith('/network');
+
+              // In expanded mode, active highlight is on the active sub-item.
+              // In collapsed mode, active highlight is on the parent Network row.
+              const isActive = isCollapsed
+                ? isGroupActive || item.key === resolvedActiveKey
+                : item.key === resolvedActiveKey;
+
+              const isParentActive = hasChildren && !isCollapsed && isGroupActive;
               const Icon = item.icon;
+
               return (
-                <Link
-                  key={item.key}
-                  to={item.href}
-                  ref={(el) => {
-                    itemRefs.current[item.key] = el;
-                  }}
-                  className={styles.row}
-                  title={isCollapsed ? item.label : undefined}
-                  aria-current={isActive ? 'page' : undefined}
-                  onClick={() => onSelect?.(item.key)}
-                >
-                  <div className={styles.iconWrap}>
-                    <Icon aria-hidden="true" />
+                <div key={item.key} style={{ display: 'contents' }}>
+                  <Link
+                    to={item.href === '/network' ? '/network/dashboard' : item.href}
+                    ref={(el) => {
+                      itemRefs.current[item.key] = el;
+                    }}
+                    className={`${styles.row} ${isParentActive ? styles.rowParentActive : ''}`}
+                    title={isCollapsed ? item.label : undefined}
+                    aria-current={isActive && !isParentActive ? 'page' : undefined}
+                    aria-expanded={hasChildren ? isGroupExpanded : undefined}
+                    aria-controls={hasChildren ? `subgroup-${item.key}` : undefined}
+                    onClick={(e) => handleItemClick(e, item)}
+                    onKeyDown={(e) => handleItemKeyDown(e, item)}
+                  >
+                    <div className={styles.iconWrap}>
+                      <Icon aria-hidden="true" />
+                      {item.badge && (
+                        <span
+                          className={`${styles.statusDot} ${styles[item.badge.tone]}`}
+                          aria-hidden="true"
+                        />
+                      )}
+                    </div>
+                    <span>{item.label}</span>
                     {item.badge && (
-                      <span
-                        className={`${styles.statusDot} ${styles[item.badge.tone]}`}
+                      <span className={`${styles.badge} ${styles[item.badge.tone]}`}>
+                        {item.badge.text}
+                      </span>
+                    )}
+                    {hasChildren && (
+                      <ChevronDown
+                        className={`${styles.parentChevron} ${
+                          isGroupExpanded ? styles.parentChevronExpanded : ''
+                        }`}
                         aria-hidden="true"
                       />
                     )}
-                  </div>
-                  <span>{item.label}</span>
-                  {item.badge && (
-                    <span className={`${styles.badge} ${styles[item.badge.tone]}`}>
-                      {item.badge.text}
-                    </span>
+                  </Link>
+
+                  {/* Sub-items accordion */}
+                  {hasChildren && (
+                    <div
+                      id={`subgroup-${item.key}`}
+                      className={`${styles.subGroupWrapper} ${
+                        isGroupExpanded ? styles.subGroupWrapperOpen : ''
+                      }`}
+                      onTransitionEnd={(e) => {
+                        if (e.target === e.currentTarget) {
+                          measureHighlight();
+                        }
+                      }}
+                      role="region"
+                      aria-label={`${item.label} sub-navigation`}
+                    >
+                      <div className={styles.subGroupInner}>
+                        {item.children!.map((child) => {
+                          const isChildActive = child.key === resolvedActiveKey;
+                          const ChildIcon = child.icon;
+                          return (
+                            <Link
+                              key={child.key}
+                              to={child.href}
+                              ref={(el) => {
+                                itemRefs.current[child.key] = el;
+                              }}
+                              data-sub-item="true"
+                              className={styles.subRow}
+                              aria-current={isChildActive ? 'page' : undefined}
+                              onClick={() => onSelect?.(child.key)}
+                            >
+                              <ChildIcon aria-hidden="true" />
+                              <span>{child.label}</span>
+                              {child.badge && (
+                                <span
+                                  className={`${styles.badge} ${styles[child.badge.tone]}`}
+                                >
+                                  {child.badge.text}
+                                </span>
+                              )}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
                   )}
-                </Link>
+                </div>
               );
             })}
           </div>

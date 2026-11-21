@@ -182,17 +182,22 @@
 .hl {
   position: absolute;
   top: 0;
-  left: 12px;
-  right: 12px;
+  left: 0;
+  width: 0;
   height: 46px;
   border-radius: 16px;
   background: var(--glass-active);
   border: 1px solid var(--glass-border-active);
   box-shadow: var(--glass-hl-shadow);
-  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              width 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              border-radius 0.3s ease,
+              opacity 0.25s ease;
   pointer-events: none;
   z-index: 0;
-  will-change: transform;
+  will-change: transform, width, height;
+  opacity: 0;
 }
 
 /* Green/cyan accent bar INSIDE the highlight pill */
@@ -200,8 +205,8 @@
   content: "";
   position: absolute;
   left: 6px;
-  top: 12px;
-  bottom: 12px;
+  top: 10px;
+  bottom: 10px;
   width: 3px;
   border-radius: 3px;
   background: var(--glass-glow);
@@ -247,6 +252,40 @@
 
 .row[aria-current="page"] svg {
   color: var(--blue);
+}
+
+/* Parent row active state: stronger text/icon color when a sub-item is active */
+.row.rowParentActive {
+  color: var(--glass-text-active);
+  font-weight: 600;
+}
+
+.row.rowParentActive svg {
+  color: var(--blue);
+}
+
+/* Parent accordion chevron */
+.parentChevron {
+  margin-left: auto;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--glass-text-muted);
+  opacity: 0.7;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s ease, opacity 0.2s ease;
+  flex: none;
+}
+
+.parentChevronExpanded {
+  transform: rotate(180deg);
+  color: var(--glass-text-active);
+  opacity: 1;
+}
+
+.sidebar.collapsed .parentChevron {
+  display: none;
 }
 
 .row:focus-visible {
@@ -362,6 +401,101 @@
   pointer-events: none;
 }
 
+/* Sub-navigation accordion group */
+.subGroupWrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+  opacity: 0;
+}
+
+.subGroupWrapperOpen {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.subGroupInner {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 3px 0 3px 12px;
+  position: relative;
+}
+
+.subGroupInner::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 6px;
+  bottom: 6px;
+  width: 1px;
+  background: var(--glass-border);
+}
+
+.sidebar.collapsed .subGroupWrapper {
+  display: none !important;
+}
+
+/* Sub-row item: indented, ~38px height */
+.subRow {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 38px;
+  flex: 0 0 38px;
+  padding: 0 10px 0 12px;
+  border: 0;
+  background: none;
+  color: var(--glass-text-muted);
+  font: 500 13.5px var(--font-sans);
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: color 0.2s ease, background 0.2s ease;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.subRow:hover:not([aria-current="page"]) {
+  background: var(--glass-hover);
+  color: var(--glass-text);
+}
+
+.subRow[aria-current="page"] {
+  color: var(--glass-text-active);
+  font-weight: 600;
+  background: transparent !important;
+}
+
+.subRow[aria-current="page"] svg {
+  color: var(--blue);
+}
+
+.subRow:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.subRow svg {
+  flex: none;
+  width: 17px;
+  height: 17px;
+  stroke-width: 1.8;
+  color: inherit;
+}
+
+.subRow span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Pinned footer */
 .foot {
   border-top: 1px solid var(--glass-border);
@@ -381,7 +515,10 @@
   .brand,
   .row,
   .row span,
-  .mark {
+  .mark,
+  .subGroupWrapper,
+  .parentChevron,
+  .subRow {
     transition: none !important;
   }
 }
