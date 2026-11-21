@@ -141,7 +141,7 @@ flowchart TD
 
 ### 7. Network Operations & Telemetry (NetworkOps)
 - **Simulated Cisco Infrastructure**: Full NetworkOps suite with real-time Cisco Packet Tracer topology visualization and telemetry across 12 perimeter and internal devices.
-- **Embedded Architecture**: The complete NetworkOps UI runs on port 3000 (`http://127.0.0.1:3000`) and is seamlessly embedded inside the host console at `/network` via a glass-bordered iframe.
+- **Native Inline Integration**: The NetworkOps pages render natively inside the Clarix AI console layout at `/network/*` with sub-navigation inside the Clarix glass sidebar.
 - **Microservice Backend**: An isolated FastAPI service running on port 8080 (`http://127.0.0.1:8080`) with CORS enabled for local development.
 
 ---
@@ -154,7 +154,6 @@ flowchart TD
 | **Host Frontend** | `5173` | `http://127.0.0.1:5173` | Main Clarix AI console & glass sidebar |
 | **Clarix Backend** | `8000` | `http://127.0.0.1:8000` | Zero-trust harness & security dispatcher |
 | **Network Backend** | `8080` | `http://127.0.0.1:8080` | NetworkOps REST API & Cisco telemetry |
-| **Network UI** | `3000` | `http://127.0.0.1:3000` | NetworkOps NOC dashboard (embedded at `/network`) |
 
 ### Prerequisites
 - Python 3.10+
@@ -224,10 +223,9 @@ npm run build
 
 ### 3. Set Up Network Services (NetworkOps)
 
-Set up both the Network backend and Network frontend:
+Set up the Network backend:
 
 ```bash
-# Set up network backend venv:
 cd network-service
 python -m venv .venv
 
@@ -237,12 +235,6 @@ source .venv/bin/activate
 .venv\Scripts\activate
 
 pip install -r requirements.txt
-cp .env.example .env
-cd ..
-
-# Set up network frontend:
-cd network-frontend
-npm install
 cp .env.example .env
 cd ..
 ```
@@ -265,13 +257,10 @@ npm run dev
 # Run Network backend only (port 8080):
 npm run dev:network-backend
 
-# Run Network UI only (port 3000):
-npm run dev:network-ui
-
-# Run Host Frontend + Network Backend + Network UI (ports 5173 + 8080 + 3000):
+# Run Host Frontend + Network Backend (ports 5173 + 8080):
 npm run dev:network
 
-# Run Full Stack concurrently (5173 + 8000 + 8080 + 3000):
+# Run Full Stack concurrently (ports 5173 + 8000 + 8080):
 npm run dev:all
 ```
 
@@ -279,11 +268,8 @@ npm run dev:all
 - In `frontend/.env.local`:
   ```env
   VITE_API_URL=http://127.0.0.1:8000
-  VITE_NETWORK_UI_URL=http://127.0.0.1:3000
-  ```
-- In `network-frontend/.env`:
-  ```env
   VITE_API_BASE=http://127.0.0.1:8080
+  ```
   ```
 
 #### Network Service REST Endpoints (Port 8080)
