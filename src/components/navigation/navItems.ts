@@ -1,7 +1,9 @@
+import { useMemo } from 'react';
 import {
   Bot, Cpu, Database, FileCheck, FileText, Fingerprint, GitFork, HeartPulse, Layers, LayoutGrid,
   Settings, Shield, ShieldAlert, Terminal, UserCheck, WifiOff, Wrench, type LucideIcon,
 } from 'lucide-react';
+import { useConsole } from '../../state/ConsoleContext';
 
 export type NavBadge = { kind: 'count'; source: 'threats'; tone: 'red' } | { kind: 'count'; source: 'approvals'; tone: 'amber' } | { kind: 'text'; text: string; tone: 'red' | 'green' };
 
@@ -45,23 +47,90 @@ export const NAV_GROUPS: NavGroup[] = [
 
 export const ALL_NAV: NavItem[] = NAV_GROUPS.flatMap((g) => g.items);
 
-export interface SidebarNavDef {
+export interface SidebarBadge {
+  text: string;
+  tone: 'danger' | 'success' | 'info' | 'warning';
+}
+
+export interface SidebarItem {
   key: string;
   label: string;
   icon: LucideIcon;
   href: string;
+  badge?: SidebarBadge;
 }
 
-export const SIDEBAR_ITEMS: SidebarNavDef[] = ALL_NAV.filter(
-  (n) => n.path !== '/settings'
-).map((n) => ({
-  key: n.path.replace(/^\//, ''),
-  label: n.label,
-  icon: n.icon,
-  href: n.path,
-}));
+export interface SidebarSection {
+  label: string;
+  items: SidebarItem[];
+}
 
-export const SIDEBAR_SETTINGS_ITEM: SidebarNavDef = {
+export function useSidebarSections(): SidebarSection[] {
+  const { counts } = useConsole();
+
+  return useMemo(
+    () => [
+      {
+        label: 'Workspace',
+        items: [
+          { key: 'overview', label: 'Overview', icon: LayoutGrid, href: '/overview' },
+          { key: 'agent', label: 'AI Agent', icon: Bot, href: '/agent' },
+          { key: 'security-monitor', label: 'Security Harness', icon: Shield, href: '/security-monitor' },
+          {
+            key: 'prompt-injection',
+            label: 'Prompt Injection',
+            icon: ShieldAlert,
+            href: '/prompt-injection',
+            badge: counts.threats > 0 ? { text: String(counts.threats), tone: 'danger' } : undefined,
+          },
+          { key: 'taint', label: 'Data Taint', icon: GitFork, href: '/taint' },
+          { key: 'policies', label: 'Policy Engine', icon: FileCheck, href: '/policies' },
+          { key: 'tool-permissions', label: 'Tool Permissions', icon: Wrench, href: '/tool-permissions' },
+          {
+            key: 'approvals',
+            label: 'Human Approval',
+            icon: UserCheck,
+            href: '/approvals',
+            badge: counts.pendingApprovals > 0 ? { text: String(counts.pendingApprovals), tone: 'warning' } : undefined,
+          },
+          {
+            key: 'air-gap',
+            label: 'Air-Gap Monitor',
+            icon: WifiOff,
+            href: '/air-gap',
+            badge: { text: 'ISOLATED', tone: 'danger' },
+          },
+          { key: 'rag', label: 'Local RAG', icon: Database, href: '/rag' },
+          {
+            key: 'ollama',
+            label: 'Ollama Engine',
+            icon: Cpu,
+            href: '/ollama',
+            badge: { text: 'ONLINE', tone: 'success' },
+          },
+        ],
+      },
+      {
+        label: 'Runtime & evidence',
+        items: [
+          { key: 'local-tools', label: 'Local Tools', icon: Terminal, href: '/local-tools' },
+          { key: 'audit', label: 'Audit Logs', icon: FileText, href: '/audit' },
+          { key: 'integrity', label: 'SHA-256 Integrity', icon: Fingerprint, href: '/integrity' },
+        ],
+      },
+      {
+        label: 'System',
+        items: [
+          { key: 'architecture', label: 'Architecture', icon: Layers, href: '/architecture' },
+          { key: 'health', label: 'System Health', icon: HeartPulse, href: '/health' },
+        ],
+      },
+    ],
+    [counts.threats, counts.pendingApprovals]
+  );
+}
+
+export const SIDEBAR_SETTINGS_ITEM: SidebarItem = {
   key: 'settings',
   label: 'Settings',
   icon: Settings,

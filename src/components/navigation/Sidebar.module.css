@@ -132,6 +132,41 @@
   display: none; /* Chrome/Safari */
 }
 
+/* Grouping / Sections */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sectionLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--glass-text-muted);
+  padding: 10px 14px 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: opacity 0.25s ease;
+}
+
+.divider {
+  display: none;
+  height: 1px;
+  background: var(--glass-border);
+  margin: 6px 8px;
+}
+
+.sidebar.collapsed .sectionLabel {
+  display: none;
+}
+
+.sidebar.collapsed .divider {
+  display: block;
+}
+
 /* Single sliding active glass highlight pill */
 .hl {
   position: absolute;
@@ -214,6 +249,93 @@
   height: 20px;
   stroke-width: 1.8;
   color: inherit;
+}
+
+/* Icon with Status Dot */
+.iconWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.statusDot {
+  display: none;
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1.5px solid var(--glass-bg);
+}
+
+.sidebar.collapsed .statusDot {
+  display: block;
+}
+
+/* Row badges */
+.badge {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+  line-height: 1.3;
+  transition: opacity 0.25s ease;
+}
+
+.sidebar.collapsed .badge {
+  display: none;
+}
+
+/* Badge Tones */
+.danger {
+  color: #d92f59;
+  background: rgba(255, 94, 130, 0.16);
+  border: 1px solid rgba(255, 94, 130, 0.45);
+}
+
+.success {
+  color: #008a67;
+  background: rgba(58, 213, 164, 0.18);
+  border: 1px solid rgba(58, 213, 164, 0.45);
+}
+
+.warning {
+  color: #a85b00;
+  background: rgba(255, 181, 73, 0.20);
+  border: 1px solid rgba(255, 181, 73, 0.50);
+}
+
+.info {
+  color: #1b4fd8;
+  background: rgba(65, 111, 255, 0.14);
+  border: 1px solid rgba(65, 111, 255, 0.35);
+}
+
+.statusDot.danger {
+  background: #ff4d86;
+  box-shadow: 0 0 6px #ff4d86;
+}
+
+.statusDot.success {
+  background: #34d399;
+  box-shadow: 0 0 6px #34d399;
+}
+
+.statusDot.warning {
+  background: #f59e0b;
+  box-shadow: 0 0 6px #f59e0b;
+}
+
+.statusDot.info {
+  background: #38bdf8;
+  box-shadow: 0 0 6px #38bdf8;
 }
 
 .row span {

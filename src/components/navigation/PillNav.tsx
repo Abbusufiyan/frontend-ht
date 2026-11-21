@@ -16,28 +16,46 @@ const NAV_LINKS: NavItem[] = [
 ];
 
 export function PillNav() {
-  const [closed, setClosed] = useState(false);
+  const [closed, setClosed] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < 900 : false));
   const location = useLocation();
 
-  const activeIndex = NAV_LINKS.findIndex((l) => l.path === location.pathname);
-  const active = activeIndex >= 0 ? activeIndex : 0;
+  const activeIndex = NAV_LINKS.findIndex((l) => {
+    if (l.path === '/') return location.pathname === '/';
+    return location.pathname.startsWith(l.path);
+  });
+  // Map any other console sub-routes (/policies, /incidents, etc.) to the Console item
+  const isConsoleSubroute =
+    activeIndex === -1 &&
+    location.pathname !== '/' &&
+    !location.pathname.startsWith('/architecture') &&
+    !location.pathname.startsWith('/settings');
+  const active = isConsoleSubroute ? 1 : activeIndex;
 
   const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
   const [dotLeft, setDotLeft] = useState<number | null>(null);
 
-  const updateDot = useCallback((index: number) => {
-    const el = itemRefs.current[index];
-    if (el) {
-      setDotLeft(el.offsetLeft + el.offsetWidth / 2);
-    }
-  }, []);
+  const updateDot = useCallback(
+    (index: number) => {
+      if (index < 0) {
+        setDotLeft(null);
+        return;
+      }
+      const el = itemRefs.current[index];
+      if (el) {
+        setDotLeft(el.offsetLeft + el.offsetWidth / 2);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     updateDot(active);
   }, [active, updateDot]);
 
   useEffect(() => {
-    const onResize = () => updateDot(active);
+    const onResize = () => {
+      updateDot(active);
+    };
     window.addEventListener('resize', onResize);
     if (document.fonts && document.fonts.ready) {
       document.fonts.ready.then(() => updateDot(active));
@@ -78,7 +96,7 @@ export function PillNav() {
         onClick={toggleNav}
         onKeyDown={handleKeyDown}
       >
-        <ClarixMark size={19} />
+        <ClarixMark size={20} />
       </div>
 
       <div className={styles.items} id="items">
@@ -103,7 +121,7 @@ export function PillNav() {
           );
         })}
 
-        {dotLeft !== null && (
+        {dotLeft !== null && active >= 0 && (
           <span
             className={styles.dot}
             style={{ left: `${dotLeft}px` }}

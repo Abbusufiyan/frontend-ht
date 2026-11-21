@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
-import { ClarixNavigation } from '../components/navigation/ClarixNavigation';
+import { Sidebar } from '../components/navigation/Sidebar';
 import { PillNav } from '../components/navigation/PillNav';
+import { SIDEBAR_SETTINGS_ITEM, useSidebarSections } from '../components/navigation/navItems';
+import { useConsole } from '../state/ConsoleContext';
 import { ROBOTS } from '../utils/assets';
 import { clamp, ease, show, win } from './anim';
 import { useRafScroll } from './useRafScroll';
@@ -330,21 +332,35 @@ function Future() {
 
 /* ---------------- page ---------------- */
 export default function Landing() {
-  useEffect(() => { document.title = 'Clarix — AI Harness Agent'; }, []);
+  const { sidebarCollapsed, setSidebarCollapsed } = useConsole();
+  const sections = useSidebarSections();
+
+  useEffect(() => {
+    document.title = 'Clarix — AI Harness Agent';
+  }, []);
+
   return (
     <>
-      <ClarixNavigation />
-      <div className="landing">
-      <RobotBackdrop />
-      <header className="top">
-        <PillNav />
-      </header>
-      <main>
-        <Story />
-        <Unlock />
-        <Pinnacle />
-        <Future />
-      </main>
+      <Sidebar
+        sections={sections}
+        settingsItem={SIDEBAR_SETTINGS_ITEM}
+        collapsed={sidebarCollapsed}
+        onCollapsedChange={setSidebarCollapsed}
+      />
+      <div
+        className="landing"
+        style={{ '--sidebar-w': sidebarCollapsed ? '76px' : '220px' } as React.CSSProperties}
+      >
+        <RobotBackdrop />
+        <header className="top">
+          <PillNav />
+        </header>
+        <main>
+          <Story />
+          <Unlock />
+          <Pinnacle />
+          <Future />
+        </main>
       </div>
     </>
   );

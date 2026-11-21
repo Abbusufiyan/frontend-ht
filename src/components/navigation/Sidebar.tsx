@@ -14,15 +14,27 @@ import { ChevronLeft } from 'lucide-react';
 import { ClarixMark } from '../common/ClarixMark';
 import styles from './Sidebar.module.css';
 
+export interface SidebarBadge {
+  text: string;
+  tone: 'danger' | 'success' | 'info' | 'warning';
+}
+
 export interface SidebarItem {
   key: string;
   label: string;
   icon: LucideIcon;
   href: string;
+  badge?: SidebarBadge;
+}
+
+export interface SidebarSection {
+  label: string;
+  items: SidebarItem[];
 }
 
 export interface SidebarProps {
-  items: SidebarItem[];
+  items?: SidebarItem[];
+  sections?: SidebarSection[];
   settingsItem?: SidebarItem;
   activeKey?: string;
   onSelect?: (key: string) => void;
@@ -58,6 +70,7 @@ function persistCollapsed(val: boolean): void {
 
 export function Sidebar({
   items,
+  sections,
   settingsItem,
   activeKey,
   onSelect,
@@ -86,14 +99,24 @@ export function Sidebar({
     [isControlled, onCollapsedChange]
   );
 
-  // Active key resolution: longest-prefix match on pathname
+  // Normalize sections
+  const normalizedSections: SidebarSection[] = useMemo(() => {
+    if (sections && sections.length > 0) return sections;
+    if (items && items.length > 0) return [{ label: '', items }];
+    return [];
+  }, [sections, items]);
+
   const allItems = useMemo(
-    () => [...items, ...(settingsItem ? [settingsItem] : [])],
-    [items, settingsItem]
+    () => [
+      ...normalizedSections.flatMap((s) => s.items),
+      ...(settingsItem ? [settingsItem] : []),
+    ],
+    [normalizedSections, settingsItem]
   );
 
+  // Active key resolution: longest-prefix match on pathname
   const resolvedActiveKey = useMemo(() => {
-    if (activeKey) return activeKey;
+    if (activeKey !== undefined) return activeKey;
     const sorted = [...allItems].sort((a, b) => b.href.length - a.href.length);
     for (const item of sorted) {
       if (item.href === '/') {
@@ -105,8 +128,8 @@ export function Sidebar({
         return item.key;
       }
     }
-    return items[0]?.key;
-  }, [activeKey, allItems, items, location.pathname]);
+    return undefined;
+  }, [activeKey, allItems, location.pathname]);
 
   const sidebarRef = useRef<HTMLElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -116,6 +139,10 @@ export function Sidebar({
   // Slide highlight measurement
   const measureHighlight = useCallback(() => {
     if (!sidebarRef.current || !hlRef.current) return;
+    if (!resolvedActiveKey) {
+      hlRef.current.style.opacity = '0';
+      return;
+    }
     const activeEl = itemRefs.current[resolvedActiveKey];
     if (!activeEl) {
       hlRef.current.style.opacity = '0';
@@ -126,8 +153,8 @@ export function Sidebar({
 
     // Check if the item is scrolled out of the visible sidebar area
     if (
-      itemRect.bottom < sidebarRect.top + 50 ||
-      itemRect.top > sidebarRect.bottom - 46
+      itemRect.bottom < sidebarRect.top + 44 ||
+      itemRect.top > sidebarRect.bottom - 44
     ) {
       hlRef.current.style.opacity = '0';
       return;
@@ -235,28 +262,47 @@ export function Sidebar({
         </button>
       </button>
 
-      {/* Core navigation list (scrollable on overflow, hidden scrollbar) */}
+      {/* Grouped navigation list (scrollable on overflow, hidden scrollbar) */}
       <div ref={listRef} className={styles.list}>
-        {items.map((item) => {
-          const isActive = item.key === resolvedActiveKey;
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.key}
-              to={item.href}
-              ref={(el) => {
-                itemRefs.current[item.key] = el;
-              }}
-              className={styles.row}
-              title={isCollapsed ? item.label : undefined}
-              aria-current={isActive ? 'page' : undefined}
-              onClick={() => onSelect?.(item.key)}
-            >
-              <Icon aria-hidden="true" />
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
+        {normalizedSections.map((sec, secIdx) => (
+          <div key={sec.label || secIdx} className={styles.section}>
+            {secIdx > 0 && <div className={styles.divider} aria-hidden="true" />}
+            {sec.label && <div className={styles.sectionLabel}>{sec.label}</div>}
+            {sec.items.map((item) => {
+              const isActive = item.key === resolvedActiveKey;
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.key}
+                  to={item.href}
+                  ref={(el) => {
+                    itemRefs.current[item.key] = el;
+                  }}
+                  className={styles.row}
+                  title={isCollapsed ? item.label : undefined}
+                  aria-current={isActive ? 'page' : undefined}
+                  onClick={() => onSelect?.(item.key)}
+                >
+                  <div className={styles.iconWrap}>
+                    <Icon aria-hidden="true" />
+                    {item.badge && (
+                      <span
+                        className={`${styles.statusDot} ${styles[item.badge.tone]}`}
+                        aria-hidden="true"
+                      />
+                    )}
+                  </div>
+                  <span>{item.label}</span>
+                  {item.badge && (
+                    <span className={`${styles.badge} ${styles[item.badge.tone]}`}>
+                      {item.badge.text}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        ))}
       </div>
 
       {/* Pinned Settings item separated by top border */}
@@ -277,8 +323,21 @@ export function Sidebar({
                 aria-current={isActive ? 'page' : undefined}
                 onClick={() => onSelect?.(settingsItem.key)}
               >
-                <Icon aria-hidden="true" />
+                <div className={styles.iconWrap}>
+                  <Icon aria-hidden="true" />
+                  {settingsItem.badge && (
+                    <span
+                      className={`${styles.statusDot} ${styles[settingsItem.badge.tone]}`}
+                      aria-hidden="true"
+                    />
+                  )}
+                </div>
                 <span>{settingsItem.label}</span>
+                {settingsItem.badge && (
+                  <span className={`${styles.badge} ${styles[settingsItem.badge.tone]}`}>
+                    {settingsItem.badge.text}
+                  </span>
+                )}
               </Link>
             );
           })()}
