@@ -14,13 +14,7 @@ const Policies = lazy(() => import('./pages/Policies'));
 const ToolPermissions = lazy(() => import('./pages/ToolPermissions'));
 const Approvals = lazy(() => import('./pages/Approvals'));
 const AirGap = lazy(() => import('./pages/AirGap'));
-const Network = lazy(() => import('./pages/network/NetworkLayout'));
-const NetworkDashboard = lazy(() => import('./pages/network/NetworkDashboard'));
-const NetworkTopology = lazy(() => import('./pages/network/NetworkTopology'));
-const NetworkIncidents = lazy(() => import('./pages/network/NetworkIncidents'));
-const NetworkDevices = lazy(() => import('./pages/network/NetworkDevices'));
-const NetworkAI = lazy(() => import('./pages/network/NetworkAI'));
-const NetworkDiagnostics = lazy(() => import('./pages/network/NetworkDiagnostics'));
+const Network = lazy(() => import('./pages/Network'));
 const Rag = lazy(() => import('./pages/Rag'));
 const LocalTools = lazy(() => import('./pages/LocalTools'));
 const Ollama = lazy(() => import('./pages/Ollama'));
@@ -50,15 +44,8 @@ export default function App() {
               <Route path="/tool-permissions" element={<ToolPermissions />} />
               <Route path="/approvals" element={<Approvals />} />
               <Route path="/air-gap" element={<AirGap />} />
-              <Route path="/network" element={<Network />}>
-                <Route index element={<Navigate to="/network/dashboard" replace />} />
-                <Route path="dashboard" element={<NetworkDashboard />} />
-                <Route path="topology" element={<NetworkTopology />} />
-                <Route path="incidents" element={<NetworkIncidents />} />
-                <Route path="devices" element={<NetworkDevices />} />
-                <Route path="ai" element={<NetworkAI />} />
-                <Route path="diagnostics" element={<NetworkDiagnostics />} />
-              </Route>
+              <Route path="/network" element={<Network />} />
+              <Route path="/network/*" element={<Network />} />
               <Route path="/rag" element={<Rag />} />
               <Route path="/local-tools" element={<LocalTools />} />
               <Route path="/ollama" element={<Ollama />} />

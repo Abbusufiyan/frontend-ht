@@ -95,13 +95,6 @@
   --badge-info-bg: rgba(65, 111, 255, 0.14);
   --badge-info-border: rgba(65, 111, 255, 0.35);
   --badge-info-dot: #38bdf8;
-
-  /* Network specific tokens (LIGHT THEME) */
-  --net-cyan: #00d9f5;
-  --net-blue: #2563ff;
-  --net-card-bg: rgba(255, 255, 255, 0.75);
-  --net-card-border: rgba(53, 92, 154, 0.16);
-  --net-glass-glow: rgba(0, 217, 245, 0.15);
 }
 
 :root[data-theme="dark"] {
@@ -146,11 +139,4 @@
   --badge-info-bg: rgba(65, 111, 255, 0.20);
   --badge-info-border: rgba(65, 111, 255, 0.40);
   --badge-info-dot: #38bdf8;
-
-  /* Network specific tokens (DARK THEME) */
-  --net-cyan: #00f0ff;
-  --net-blue: #3b82f6;
-  --net-card-bg: rgba(15, 23, 42, 0.70);
-  --net-card-border: rgba(255, 255, 255, 0.12);
-  --net-glass-glow: rgba(0, 240, 255, 0.20);
 }
