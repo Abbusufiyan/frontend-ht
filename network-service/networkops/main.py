@@ -34,19 +34,10 @@ app = FastAPI(
     version="1.1.0",
 )
 
-# Restrict CORS to local frontend dev origins
+# Enable CORS for local Vite development frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:5174",
-        "http://127.0.0.1:5174",
-        "http://localhost:4173",
-        "http://127.0.0.1:4173",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -61,12 +52,6 @@ def read_root():
         "version": "1.1.0",
         "demo_modes": ["healthy", "faulty"],
     }
-
-
-@app.get("/api/network/health")
-def health_check():
-    """Health check endpoint for network microservice."""
-    return {"status": "ok", "service": "networkops", "version": "1.1.0"}
 
 
 @app.get("/api/network/status", response_model=NetworkStatus)
