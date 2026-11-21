@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import { ClarixNavigation } from '../navigation/ClarixNavigation';
-import { ToastHost, AuthModal } from '../common';
+import { Sidebar } from '../navigation/Sidebar';
+import { AuthModal, ToastHost } from '../common';
 import { ConsoleBackdrop } from './ConsoleBackdrop';
 import { TopBar } from './TopBar';
-import { ALL_NAV } from '../navigation/navItems';
+import { ALL_NAV, SIDEBAR_SETTINGS_ITEM, useSidebarSections } from '../navigation/navItems';
+import { useConsole } from '../../state/ConsoleContext';
 import styles from './Layout.module.css';
 
 export function AppShell() {
   const { pathname } = useLocation();
+  const { sidebarCollapsed, setSidebarCollapsed } = useConsole();
+  const sections = useSidebarSections();
   const [authOpen, setAuthOpen] = useState(false);
 
   useEffect(() => {
@@ -22,13 +25,20 @@ export function AppShell() {
   }, [pathname]);
 
   return (
-    <>
+    <div className={`${styles.shell} ${sidebarCollapsed ? styles.shellCollapsed : ''}`}>
       <ConsoleBackdrop />
-      <ClarixNavigation />
+      <Sidebar
+        sections={sections}
+        settingsItem={SIDEBAR_SETTINGS_ITEM}
+        collapsed={sidebarCollapsed}
+        onCollapsedChange={setSidebarCollapsed}
+      />
       <TopBar />
-      <main className={styles.main}><Outlet /></main>
+      <main className={styles.main}>
+        <Outlet />
+      </main>
       <ToastHost />
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} onSuccess={() => window.location.reload()} />
-    </>
+    </div>
   );
 }
