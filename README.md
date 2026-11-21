@@ -139,6 +139,12 @@ flowchart TD
 - **Encrypted Local Storage**: AES-256 envelope encryption at rest for documents and workspace data with local vault keys.
 - **Egress Guard**: In-process socket interception stopping non-loopback connections, complemented by kernel firewall rules.
 
+### 7. Network Operations & Telemetry (NetworkOps)
+- **Simulated Cisco Infrastructure**: Real-time topology visualization and telemetry across 12 perimeter and internal devices (core routers, distribution switches, firewalls, servers).
+- **Incident Management**: Severity tracking (critical/warning/healthy), MTTR estimation, and root-cause analysis for network anomalies.
+- **AI Remediation & Diagnostics**: Diagnostic queries, ping diagnostics, and operator-approved automated remediation workflows.
+- **Isolated Microservice Architecture**: Runs independently on port 8080 (`http://127.0.0.1:8080`) over loopback with zero external telemetry leakage.
+
 ---
 
 ## Quick Start Guide
@@ -208,6 +214,60 @@ Build for production:
 ```bash
 npm run build
 ```
+
+### 3. Set Up Network Service (NetworkOps)
+
+The Network service is an independent FastAPI microservice running on port `8080`:
+
+```bash
+cd network-service
+python -m venv .venv
+
+# On Linux/macOS:
+source .venv/bin/activate
+# On Windows:
+.venv\Scripts\activate
+
+pip install -r requirements.txt
+cp .env.example .env
+```
+
+Start the Network service directly:
+```bash
+uvicorn networkops.main:app --host 127.0.0.1 --port 8080 --reload
+# Running on http://127.0.0.1:8080 (Docs at http://127.0.0.1:8080/docs)
+```
+
+### 4. Running the Stack (Unified npm Scripts)
+
+From the `frontend/` directory, you can start individual components or run the entire stack concurrently:
+
+```bash
+cd frontend
+
+# Run frontend only (port 5173):
+npm run dev
+
+# Run frontend + Network service (ports 5173 + 8080):
+npm run dev:network
+
+# Run full stack: Frontend + Clarix Backend + Network Service (ports 5173 + 8000 + 8080):
+npm run dev:all
+
+# Set up or update Network service virtual environment:
+npm run setup:network
+```
+
+#### Network Service REST Endpoints (Port 8080)
+- `GET /api/network/health` — Service health status
+- `GET /api/network/topology` — 12-device network graph nodes & edges
+- `GET /api/network/telemetry` — Live telemetry metrics (throughput, latency, packet loss)
+- `GET /api/network/incidents` — Active & historical network incidents
+- `GET /api/network/devices` — Device inventory and status list
+- `POST /api/network/devices/{id}/ping` — Simulated ICMP ping diagnostics
+- `POST /api/network/remediate` — Operator-approved incident remediation simulation
+- `POST /api/network/verify` — Post-remediation verification simulation
+
 
 ---
 

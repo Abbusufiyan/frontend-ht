@@ -63,6 +63,12 @@ def read_root():
     }
 
 
+@app.get("/api/network/health")
+def health_check():
+    """Health check endpoint for network microservice."""
+    return {"status": "ok", "service": "networkops", "version": "1.1.0"}
+
+
 @app.get("/api/network/status", response_model=NetworkStatus)
 def get_network_status(demo_mode: str = Query("healthy", description="'healthy' or 'faulty'")):
     """Returns overall health, incident statistics, and device availability for selected demo."""
