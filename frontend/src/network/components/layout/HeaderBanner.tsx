@@ -18,27 +18,36 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
     <div
       style={{
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         justifyContent: 'space-between',
         flexWrap: 'wrap',
-        gap: '14px',
-        marginBottom: '16px',
+        gap: '1rem',
+        marginBottom: '1.1rem',
       }}
     >
       <div>
         <h1
           style={{
-            fontSize: '1.45rem',
-            fontWeight: 800,
-            letterSpacing: '-0.3px',
-            color: '#14243B',
+            font: '800 clamp(1.05rem, 1.75vw, 1.5rem)/1.15 var(--font-mono)',
+            textTransform: 'uppercase',
+            letterSpacing: '0.005em',
+            color: 'var(--ink)',
             margin: 0,
-            marginBottom: '4px',
+            marginBottom: '0.35rem',
           }}
         >
           {title}
         </h1>
-        <p style={{ fontSize: '0.86rem', color: '#5A7189', margin: 0 }}>
+        <p
+          style={{
+            fontSize: '0.78rem',
+            lineHeight: 1.5,
+            fontFamily: 'var(--font-mono)',
+            color: 'var(--mute)',
+            margin: 0,
+            maxWidth: '72ch',
+          }}
+        >
           {subtitle}
         </p>
       </div>
@@ -77,7 +86,7 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
           title="Export NOC Report"
           style={{ cursor: 'pointer', padding: '8px 12px' }}
         >
-          <Download size={15} color="#5A7189" />
+          <Download size={15} color="var(--mute, #5A7189)" />
         </button>
 
         <button
@@ -85,7 +94,7 @@ export const HeaderBanner: React.FC<HeaderBannerProps> = ({
           title="Share Topology View"
           style={{ cursor: 'pointer', padding: '8px 12px' }}
         >
-          <Share2 size={15} color="#5A7189" />
+          <Share2 size={15} color="var(--mute, #5A7189)" />
         </button>
       </div>
     </div>

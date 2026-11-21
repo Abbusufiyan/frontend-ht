@@ -82,12 +82,10 @@ export const AIInvestigationPage: React.FC<AIInvestigationPageProps> = ({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       {/* Page Title & Intro */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '14px' }}>
-        <div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#14243B', margin: 0, letterSpacing: '-0.3px' }}>
-            Clarix AI Network Troubleshooting Engine
-          </h1>
-          <p style={{ fontSize: '0.86rem', color: '#5A7189', margin: '4px 0 0 0' }}>
+      <div className="workspace-header">
+        <div className="workspace-title-box">
+          <h1>Clarix AI Network Troubleshooting Engine</h1>
+          <p>
             VisionOS AI Agent Operating Environment with deterministic root-cause heuristics and Packet Tracer command generation.
           </p>
         </div>

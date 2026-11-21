@@ -28,13 +28,13 @@ export const SettingsPage: React.FC = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', maxWidth: '900px' }}>
-      <div>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#14243B', margin: 0 }}>
-          NetworkOps Configuration & Settings
-        </h1>
-        <p style={{ fontSize: '0.86rem', color: '#5A7189', margin: '4px 0 0 0' }}>
-          Configure standalone FastAPI backend connectivity, Cisco Packet Tracer integration parameters, and safety controls.
-        </p>
+      <div className="workspace-header">
+        <div className="workspace-title-box">
+          <h1>NetworkOps Configuration & Settings</h1>
+          <p>
+            Configure standalone FastAPI backend connectivity, Cisco Packet Tracer integration parameters, and safety controls.
+          </p>
+        </div>
       </div>
 
       {/* Backend API Configuration */}

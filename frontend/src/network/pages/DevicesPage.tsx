@@ -59,13 +59,13 @@ export const DevicesPage: React.FC<DevicesPageProps> = ({ devices, onNavigateToA
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      <div>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#14243B', margin: 0 }}>
-          Network Fleet Devices
-        </h1>
-        <p style={{ fontSize: '0.86rem', color: '#5A7189', margin: '4px 0 0 0' }}>
-          Monitored Cisco infrastructure nodes, access switches, endpoints, and server infrastructure.
-        </p>
+      <div className="workspace-header">
+        <div className="workspace-title-box">
+          <h1>Network Fleet Devices</h1>
+          <p>
+            Monitored Cisco infrastructure nodes, access switches, endpoints, and server infrastructure.
+          </p>
+        </div>
       </div>
 
       {/* Filter Bar */}

@@ -4,15 +4,48 @@
 .app-viewport,
 .app-container-inner,
 .app-main-layout,
-.app-content-area {
-  width: 100%;
-  height: auto;
-  min-height: unset;
-  max-width: 100%;
-  background: transparent;
-  box-shadow: none;
-  border: none;
-  overflow: visible;
+.app-content-area,
+.nx-root {
+  width: 100% !important;
+  height: auto !important;
+  min-height: unset !important;
+  max-width: 100% !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: visible !important;
+}
+
+/* Page headers in Network sub-pages */
+.workspace-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.workspace-title-box h1 {
+  font: 800 clamp(1.05rem, 1.75vw, 1.5rem)/1.15 var(--font-mono) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.005em !important;
+  color: var(--ink) !important;
+  margin: 0 !important;
+  margin-bottom: 0.35rem !important;
+}
+
+.workspace-title-box p {
+  margin: 0 !important;
+  max-width: 72ch !important;
+  font: 400 0.78rem/1.5 var(--font-mono) !important;
+  color: var(--mute) !important;
 }
 
 /* Top Navbar — Clean Brand Identity */
@@ -202,11 +235,11 @@
   border: 1.5px solid rgba(59, 107, 255, 0.35);
 }
 
-/* Layout Body: Sidebar + Main Content */
+/* Layout Body: Sidebar + Main Content (neutralized) */
 .app-main-layout {
-  display: flex;
-  flex: 1;
-  min-height: calc(940px - 58px);
+  display: block;
+  width: 100%;
+  min-height: unset;
 }
 
 /* Vertical Sidebar */
@@ -262,14 +295,13 @@
   box-shadow: 0 6px 18px rgba(59, 107, 255, 0.32);
 }
 
-/* App Content Area */
+/* App Content Area (neutralized) */
 .app-content-area {
-  flex: 1;
-  padding: 24px 28px;
-  overflow-y: auto;
+  width: 100%;
+  padding: 0;
+  overflow: visible;
   background: transparent;
-  display: flex;
-  flex-direction: column;
+  display: block;
 }
 
 /* Dashboard Grid Layout */
@@ -508,11 +540,12 @@
 }
 
 @media (max-width: 768px) {
-  #root {
-    padding: 8px;
+  #root,
+  .nx-root {
+    padding: 0 !important;
   }
   .app-viewport {
-    border-radius: var(--radius-lg);
+    border-radius: 0;
   }
   .app-sidebar {
     display: none;

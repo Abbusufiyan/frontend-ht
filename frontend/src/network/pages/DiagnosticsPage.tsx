@@ -30,13 +30,13 @@ export const DiagnosticsPage: React.FC = () => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      <div>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#14243B', margin: 0 }}>
-          Network Diagnostics & Probes
-        </h1>
-        <p style={{ fontSize: '0.86rem', color: '#5A7189', margin: '4px 0 0 0' }}>
-          Run ICMP echo tests, traceroute paths, and verify OSPF adjacency convergence.
-        </p>
+      <div className="workspace-header">
+        <div className="workspace-title-box">
+          <h1>Network Diagnostics & Probes</h1>
+          <p>
+            Run ICMP echo tests, traceroute paths, and verify OSPF adjacency convergence.
+          </p>
+        </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '380px 1fr', gap: '20px' }}>

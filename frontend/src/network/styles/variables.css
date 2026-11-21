@@ -1,9 +1,9 @@
 :root {
-  /* Clarix Assets Theme Core Palette */
-  --bg: #e8f0fa;
-  --bg-app-shell: #e8f0fa;
-  --bg-workspace: #f4f8fe;
-  --bg-soft-white: #f8fcff;
+  /* Clarix Assets Theme Core Palette - Neutralized for inline host embedding */
+  --bg: transparent;
+  --bg-app-shell: transparent;
+  --bg-workspace: transparent;
+  --bg-soft-white: transparent;
   --bg-pure-white: #ffffff;
 
   /* Ink & Typography */
