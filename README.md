@@ -140,14 +140,21 @@ flowchart TD
 - **Egress Guard**: In-process socket interception stopping non-loopback connections, complemented by kernel firewall rules.
 
 ### 7. Network Operations & Telemetry (NetworkOps)
-- **Simulated Cisco Infrastructure**: Real-time topology visualization and telemetry across 12 perimeter and internal devices (core routers, distribution switches, firewalls, servers).
-- **Incident Management**: Severity tracking (critical/warning/healthy), MTTR estimation, and root-cause analysis for network anomalies.
-- **AI Remediation & Diagnostics**: Diagnostic queries, ping diagnostics, and operator-approved automated remediation workflows.
-- **Isolated Microservice Architecture**: Runs independently on port 8080 (`http://127.0.0.1:8080`) over loopback with zero external telemetry leakage.
+- **Simulated Cisco Infrastructure**: Full NetworkOps suite with real-time Cisco Packet Tracer topology visualization and telemetry across 12 perimeter and internal devices.
+- **Embedded Architecture**: The complete NetworkOps UI runs on port 3000 (`http://127.0.0.1:3000`) and is seamlessly embedded inside the host console at `/network` via a glass-bordered iframe.
+- **Microservice Backend**: An isolated FastAPI service running on port 8080 (`http://127.0.0.1:8080`) with CORS enabled for local development.
 
 ---
 
 ## Quick Start Guide
+
+### Port Architecture
+| Component | Port | URL | Description |
+|---|---|---|---|
+| **Host Frontend** | `5173` | `http://127.0.0.1:5173` | Main Clarix AI console & glass sidebar |
+| **Clarix Backend** | `8000` | `http://127.0.0.1:8000` | Zero-trust harness & security dispatcher |
+| **Network Backend** | `8080` | `http://127.0.0.1:8080` | NetworkOps REST API & Cisco telemetry |
+| **Network UI** | `3000` | `http://127.0.0.1:3000` | NetworkOps NOC dashboard (embedded at `/network`) |
 
 ### Prerequisites
 - Python 3.10+
@@ -215,11 +222,12 @@ Build for production:
 npm run build
 ```
 
-### 3. Set Up Network Service (NetworkOps)
+### 3. Set Up Network Services (NetworkOps)
 
-The Network service is an independent FastAPI microservice running on port `8080`:
+Set up both the Network backend and Network frontend:
 
 ```bash
+# Set up network backend venv:
 cd network-service
 python -m venv .venv
 
@@ -230,33 +238,53 @@ source .venv/bin/activate
 
 pip install -r requirements.txt
 cp .env.example .env
+cd ..
+
+# Set up network frontend:
+cd network-frontend
+npm install
+cp .env.example .env
+cd ..
 ```
 
-Start the Network service directly:
+Or run the automated setup script from `frontend/`:
 ```bash
-uvicorn networkops.main:app --host 127.0.0.1 --port 8080 --reload
-# Running on http://127.0.0.1:8080 (Docs at http://127.0.0.1:8080/docs)
+npm --prefix frontend run setup:network
 ```
 
 ### 4. Running the Stack (Unified npm Scripts)
 
-From the `frontend/` directory, you can start individual components or run the entire stack concurrently:
+From the `frontend/` directory, you can start individual components or run the entire multi-service stack concurrently:
 
 ```bash
 cd frontend
 
-# Run frontend only (port 5173):
+# Run host frontend only (port 5173):
 npm run dev
 
-# Run frontend + Network service (ports 5173 + 8080):
+# Run Network backend only (port 8080):
+npm run dev:network-backend
+
+# Run Network UI only (port 3000):
+npm run dev:network-ui
+
+# Run Host Frontend + Network Backend + Network UI (ports 5173 + 8080 + 3000):
 npm run dev:network
 
-# Run full stack: Frontend + Clarix Backend + Network Service (ports 5173 + 8000 + 8080):
+# Run Full Stack concurrently (5173 + 8000 + 8080 + 3000):
 npm run dev:all
-
-# Set up or update Network service virtual environment:
-npm run setup:network
 ```
+
+#### Environment Variables
+- In `frontend/.env.local`:
+  ```env
+  VITE_API_URL=http://127.0.0.1:8000
+  VITE_NETWORK_UI_URL=http://127.0.0.1:3000
+  ```
+- In `network-frontend/.env`:
+  ```env
+  VITE_API_BASE=http://127.0.0.1:8080
+  ```
 
 #### Network Service REST Endpoints (Port 8080)
 - `GET /api/network/health` — Service health status
