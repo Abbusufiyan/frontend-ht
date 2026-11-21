@@ -1,0 +1,168 @@
+.nav {
+  --pill: #120f17;
+  --pill-text: #ffffff;
+  --fill: #ffffff;
+  --fill-text: #120f17;
+  --muted: #6b6577;
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--pill);
+  padding: 6px;
+  border-radius: 999px;
+  max-width: 100%;
+  overflow-x: auto;
+  position: relative;
+  transition: gap 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  box-sizing: border-box;
+  user-select: none;
+}
+
+.nav.closed {
+  gap: 0;
+}
+
+.logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--fill);
+  color: var(--fill-text);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  flex: none;
+  cursor: pointer;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+}
+
+.logo:hover {
+  transform: rotate(360deg);
+}
+
+.logo:focus-visible {
+  outline: 2px solid #4a6bff;
+  outline-offset: 2px;
+}
+
+.logo svg {
+  width: 19px;
+  height: 19px;
+  color: var(--fill-text);
+  display: block;
+}
+
+.items {
+  display: flex;
+  gap: 4px;
+  position: relative;
+  max-width: 800px;
+  opacity: 1;
+  transition: max-width 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+}
+
+.nav.closed .items {
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.item {
+  position: relative;
+  overflow: hidden;
+  display: block;
+  height: 40px;
+  padding: 0 20px;
+  border-radius: 999px;
+  color: var(--pill-text);
+  text-decoration: none;
+  font-family: 'Sofia Sans', Inter, system-ui, -apple-system, sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  line-height: 40px;
+  isolation: isolate;
+  outline: none;
+}
+
+.item:focus-visible {
+  outline: 2px solid #4a6bff;
+  outline-offset: 2px;
+}
+
+.circle {
+  position: absolute;
+  left: 50%;
+  bottom: -130%;
+  width: 180%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--fill);
+  transform: translateX(-50%) scale(0);
+  transform-origin: 50% 100%;
+  transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1), bottom 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.item:hover .circle {
+  bottom: -60%;
+  transform: translateX(-50%) scale(1.2);
+}
+
+.item.active .circle {
+  transform: translateX(-50%) scale(1.2);
+}
+
+.item.active:not(:hover) .circle {
+  transform: translateX(-50%) scale(0);
+}
+
+.labelWrap {
+  position: relative;
+  display: block;
+  height: 40px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.label,
+.labelHover {
+  display: block;
+  height: 40px;
+  line-height: 40px;
+  transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.labelHover {
+  color: var(--fill-text);
+}
+
+.item:hover .label,
+.item:hover .labelHover {
+  transform: translateY(-100%);
+}
+
+.dot {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--pill-text);
+  transform: translateX(-50%);
+  transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+.item.active:hover ~ .dot {
+  opacity: 0;
+}

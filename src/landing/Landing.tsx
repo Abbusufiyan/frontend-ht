@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { ClarixNavigation } from '../components/navigation/ClarixNavigation';
+import { PillNav } from '../components/navigation/PillNav';
 import { ROBOTS } from '../utils/assets';
 import { clamp, ease, show, win } from './anim';
 import { useRafScroll } from './useRafScroll';
@@ -336,12 +337,7 @@ export default function Landing() {
       <div className="landing">
       <RobotBackdrop />
       <header className="top">
-        <nav aria-label="Main">
-          <Link to="/">Home ↗</Link>
-          <Link to="/overview">Console ↗</Link>
-          <Link to="/architecture">Architecture ↗</Link>
-          <Link to="/settings">Settings ↗</Link>
-        </nav>
+        <PillNav />
       </header>
       <main>
         <Story />
